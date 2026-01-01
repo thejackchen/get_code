@@ -102,24 +102,24 @@ def admin_page():
         return jsonify({"ok": False, "error": "Unauthorized", "message": "Invalid token"}), 401
 
     status = get_version_info()
-    html = f"""<!doctype html>
+    html = """<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Remote Control</title>
     <style>
-      body {{ font-family: Arial, sans-serif; margin: 2rem; }}
-      button {{ padding: 0.6rem 1rem; font-size: 1rem; }}
-      .info {{ margin-bottom: 1rem; }}
-      pre {{ background: #f4f4f4; padding: 1rem; }}
+      body { font-family: Arial, sans-serif; margin: 2rem; }
+      button { padding: 0.6rem 1rem; font-size: 1rem; }
+      .info { margin-bottom: 1rem; }
+      pre { background: #f4f4f4; padding: 1rem; }
     </style>
   </head>
   <body>
     <h1>Remote Control</h1>
     <div class="info">
-      <div><strong>Version:</strong> {status["version"]}</div>
-      <div><strong>Uptime:</strong> {status["uptime_seconds"]}s</div>
+      <div><strong>Version:</strong> __VERSION__</div>
+      <div><strong>Uptime:</strong> __UPTIME__s</div>
     </div>
     <p>Click once to update and restart. The page will refresh after a few seconds.</p>
     <button id="oneclick">Update + Restart</button>
@@ -143,6 +143,9 @@ def admin_page():
     </script>
   </body>
 </html>"""
+    html = html.replace("__VERSION__", status["version"]).replace(
+        "__UPTIME__", str(status["uptime_seconds"])
+    )
     return Response(html, mimetype="text/html")
 
 
