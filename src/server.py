@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+import threading
 from http import HTTPStatus
 
 from flask import Flask, jsonify, request, Response
@@ -68,6 +69,12 @@ def schedule_restart():
     else:
         subprocess.Popen([RESTART_SCRIPT], cwd=REPO_DIR)
 
+    def _exit_soon():
+        time.sleep(1)
+        os._exit(0)
+
+    threading.Thread(target=_exit_soon, daemon=True).start()
+
 
 def get_version_info():
     try:
@@ -86,6 +93,8 @@ def get_version_info():
     return {
         "version": version,
         "uptime_seconds": uptime_seconds,
+        "pid": os.getpid(),
+        "start_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(START_TIME)),
     }
 
 
@@ -124,6 +133,8 @@ def admin_page():
     <div class="info">
       <div><strong>Version:</strong> __VERSION__</div>
       <div><strong>Uptime:</strong> __UPTIME__s</div>
+      <div><strong>PID:</strong> __PID__</div>
+      <div><strong>Start:</strong> __START_TIME__</div>
     </div>
     <p>Click once to update and restart. The page will refresh after a few seconds.</p>
     <button id="oneclick">Update + Restart</button>
@@ -147,8 +158,11 @@ def admin_page():
     </script>
   </body>
 </html>"""
-    html = html.replace("__VERSION__", status["version"]).replace(
-        "__UPTIME__", str(status["uptime_seconds"])
+    html = (
+        html.replace("__VERSION__", status["version"])
+        .replace("__UPTIME__", str(status["uptime_seconds"]))
+        .replace("__PID__", str(status["pid"]))
+        .replace("__START_TIME__", status["start_time"])
     )
     return Response(html, mimetype="text/html")
 
