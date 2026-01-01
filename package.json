@@ -1,0 +1,10 @@
+{
+  "name": "get_code-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal API service scaffold",
+  "main": "src/server.py",
+  "scripts": {
+    "start": "python src/server.py"
+  }
+}
