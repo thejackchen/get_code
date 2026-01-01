@@ -32,17 +32,22 @@ def run_update():
         text=True,
     )
     output = "\n".join([proc.stdout, proc.stderr]).strip()
+    version = get_version_info()["version"]
     if proc.returncode != 0:
         return {
             "ok": False,
             "error": "UpdateFailed",
             "message": f"Exit code {proc.returncode}",
             "output": output,
+            "version": version,
+            "server_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }, HTTPStatus.INTERNAL_SERVER_ERROR
     return {
         "ok": True,
         "message": "Update completed",
         "output": output,
+        "version": version,
+        "server_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }, HTTPStatus.OK
 
 
@@ -116,7 +121,7 @@ def admin_page():
       <div><strong>Version:</strong> {status["version"]}</div>
       <div><strong>Uptime:</strong> {status["uptime_seconds"]}s</div>
     </div>
-    <p>Click once to update and restart.</p>
+    <p>Click once to update and restart. The page will refresh after a few seconds.</p>
     <button id="oneclick">Update + Restart</button>
     <pre id="output"></pre>
     <script>
@@ -130,6 +135,9 @@ def admin_page():
         const resp = await fetch(withToken(path), { method: "POST" });
         const json = await resp.json();
         out.textContent = JSON.stringify(json, null, 2);
+        if (json.ok) {
+          setTimeout(() => location.reload(), 4000);
+        }
       };
       btn.addEventListener("click", () => run("Updating and restarting...", "/admin/oneclick"));
     </script>
