@@ -20,3 +20,6 @@ Use NSSM or Task Scheduler to keep the service running:
 
 ## Restart Behavior
 The service restarts by spawning a new Python process and exiting the current one.
+
+## Startup Status
+Windows Task Scheduler is still the recommended way to start the service at boot.
