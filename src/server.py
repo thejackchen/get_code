@@ -1,7 +1,6 @@
 import os
 import subprocess
 import time
-import threading
 from http import HTTPStatus
 
 from flask import Flask, jsonify, request, Response
@@ -14,6 +13,7 @@ REPO_DIR = os.getenv("REPO_DIR", os.getcwd())
 RESTART_SCRIPT = os.getenv("RESTART_SCRIPT", os.path.join(REPO_DIR, "start.bat"))
 RESTART_DELAY = int(os.getenv("RESTART_DELAY", "2"))
 TASK_NAME = os.getenv("TASK_NAME", "")
+RESTART_TASK_NAME = os.getenv("RESTART_TASK_NAME", "")
 START_TIME = time.time()
 
 
@@ -54,7 +54,9 @@ def run_update():
 
 def schedule_restart():
     if os.name == "nt":
-        if TASK_NAME:
+        if RESTART_TASK_NAME:
+            cmd = f'schtasks /run /tn "{RESTART_TASK_NAME}"'
+        elif TASK_NAME:
             cmd = (
                 f'schtasks /end /tn "{TASK_NAME}" & '
                 f'timeout /t {RESTART_DELAY} >nul & '
@@ -65,12 +67,6 @@ def schedule_restart():
         subprocess.Popen(["cmd", "/c", cmd], cwd=REPO_DIR)
     else:
         subprocess.Popen([RESTART_SCRIPT], cwd=REPO_DIR)
-
-    def _exit_soon():
-        time.sleep(1)
-        os._exit(0)
-
-    threading.Thread(target=_exit_soon, daemon=True).start()
 
 
 def get_version_info():
