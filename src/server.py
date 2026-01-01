@@ -2,6 +2,7 @@ import os
 import subprocess
 import time
 import threading
+import sys
 from http import HTTPStatus
 
 from flask import Flask, jsonify, request, Response
@@ -11,10 +12,7 @@ app = Flask(__name__)
 PORT = int(os.getenv("PORT", "3000"))
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
 REPO_DIR = os.getenv("REPO_DIR", os.getcwd())
-RESTART_SCRIPT = os.getenv("RESTART_SCRIPT", os.path.join(REPO_DIR, "restart.bat"))
 RESTART_DELAY = int(os.getenv("RESTART_DELAY", "2"))
-TASK_NAME = os.getenv("TASK_NAME", "")
-RESTART_TASK_NAME = os.getenv("RESTART_TASK_NAME", "")
 START_TIME = time.time()
 
 
@@ -55,24 +53,18 @@ def run_update():
 
 def schedule_restart():
     if os.name == "nt":
-        restart_task = RESTART_TASK_NAME.strip().strip('"')
-        task_name = TASK_NAME.strip().strip('"')
-        if restart_task:
-            cmd = f'schtasks /run /tn "{restart_task}"'
-        elif task_name:
-            cmd = (
-                f'schtasks /end /tn "{task_name}" & '
-                f'timeout /t {RESTART_DELAY} >nul & '
-                f'schtasks /run /tn "{task_name}"'
-            )
-        elif os.path.exists(RESTART_SCRIPT):
-            cmd = f'cmd /c "{RESTART_SCRIPT}"'
-        else:
-            start_script = os.path.join(REPO_DIR, "start.bat")
-            cmd = f'timeout /t {RESTART_DELAY} >nul & start "" "{start_script}"'
-        subprocess.Popen(["cmd", "/c", cmd], cwd=REPO_DIR)
+        server_path = os.path.join(REPO_DIR, "src", "server.py")
+        flags = 0
+        flags |= getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+        flags |= getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
+        subprocess.Popen(
+            [sys.executable, server_path],
+            cwd=REPO_DIR,
+            creationflags=flags,
+        )
     else:
-        subprocess.Popen([RESTART_SCRIPT], cwd=REPO_DIR)
+        server_path = os.path.join(REPO_DIR, "src", "server.py")
+        subprocess.Popen([sys.executable, server_path], cwd=REPO_DIR)
 
     def _exit_soon():
         time.sleep(1)
