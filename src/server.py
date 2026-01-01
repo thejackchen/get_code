@@ -11,7 +11,7 @@ app = Flask(__name__)
 PORT = int(os.getenv("PORT", "3000"))
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
 REPO_DIR = os.getenv("REPO_DIR", os.getcwd())
-RESTART_SCRIPT = os.getenv("RESTART_SCRIPT", os.path.join(REPO_DIR, "start.bat"))
+RESTART_SCRIPT = os.getenv("RESTART_SCRIPT", os.path.join(REPO_DIR, "restart.bat"))
 RESTART_DELAY = int(os.getenv("RESTART_DELAY", "2"))
 TASK_NAME = os.getenv("TASK_NAME", "")
 RESTART_TASK_NAME = os.getenv("RESTART_TASK_NAME", "")
@@ -55,16 +55,21 @@ def run_update():
 
 def schedule_restart():
     if os.name == "nt":
-        if RESTART_TASK_NAME:
-            cmd = f'schtasks /run /tn "{RESTART_TASK_NAME}"'
-        elif TASK_NAME:
+        restart_task = RESTART_TASK_NAME.strip().strip('"')
+        task_name = TASK_NAME.strip().strip('"')
+        if restart_task:
+            cmd = f'schtasks /run /tn "{restart_task}"'
+        elif task_name:
             cmd = (
-                f'schtasks /end /tn "{TASK_NAME}" & '
+                f'schtasks /end /tn "{task_name}" & '
                 f'timeout /t {RESTART_DELAY} >nul & '
-                f'schtasks /run /tn "{TASK_NAME}"'
+                f'schtasks /run /tn "{task_name}"'
             )
+        elif os.path.exists(RESTART_SCRIPT):
+            cmd = f'cmd /c "{RESTART_SCRIPT}"'
         else:
-            cmd = f'timeout /t {RESTART_DELAY} >nul & start "" "{RESTART_SCRIPT}"'
+            start_script = os.path.join(REPO_DIR, "start.bat")
+            cmd = f'timeout /t {RESTART_DELAY} >nul & start "" "{start_script}"'
         subprocess.Popen(["cmd", "/c", cmd], cwd=REPO_DIR)
     else:
         subprocess.Popen([RESTART_SCRIPT], cwd=REPO_DIR)
