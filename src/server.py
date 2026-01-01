@@ -13,6 +13,7 @@ ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
 REPO_DIR = os.getenv("REPO_DIR", os.getcwd())
 RESTART_SCRIPT = os.getenv("RESTART_SCRIPT", os.path.join(REPO_DIR, "start.bat"))
 RESTART_DELAY = int(os.getenv("RESTART_DELAY", "2"))
+TASK_NAME = os.getenv("TASK_NAME", "")
 START_TIME = time.time()
 
 
@@ -53,7 +54,14 @@ def run_update():
 
 def schedule_restart():
     if os.name == "nt":
-        cmd = f'timeout /t {RESTART_DELAY} >nul & start "" "{RESTART_SCRIPT}"'
+        if TASK_NAME:
+            cmd = (
+                f'schtasks /end /tn "{TASK_NAME}" & '
+                f'timeout /t {RESTART_DELAY} >nul & '
+                f'schtasks /run /tn "{TASK_NAME}"'
+            )
+        else:
+            cmd = f'timeout /t {RESTART_DELAY} >nul & start "" "{RESTART_SCRIPT}"'
         subprocess.Popen(["cmd", "/c", cmd], cwd=REPO_DIR)
     else:
         subprocess.Popen([RESTART_SCRIPT], cwd=REPO_DIR)

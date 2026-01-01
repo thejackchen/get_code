@@ -13,6 +13,7 @@ If `ADMIN_TOKEN` is set, append `?token=...` to the URL or send `x-admin-token` 
 - `REPO_DIR`: repo path for `git pull`, defaults to service working directory
 - `RESTART_SCRIPT`: restart script path, defaults to `start.bat` in `REPO_DIR`
 - `RESTART_DELAY`: delay seconds before restart, default `2`
+- `TASK_NAME`: Windows Task Scheduler task name, recommended for reliable restarts
 
 ## Service Management (Windows)
 Use NSSM or Task Scheduler to keep the service running:
